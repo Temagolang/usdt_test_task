@@ -19,7 +19,10 @@ docker-build:
 run:
 	docker-compose --profile app up --build
 
-gen: gen-sqlc
+gen: gen-proto gen-sqlc
+
+gen-proto:
+	buf generate
 
 gen-sqlc:
 	sqlc generate

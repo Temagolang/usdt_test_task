@@ -44,7 +44,8 @@ func (a *Application) Run(ctx context.Context) error {
 	}()
 
 	// Create gRPC server.
-	grpcSrv := transportgrpc.NewServer(a.logger)
+	// TODO(T15): pass real rates.Service instead of nil after wiring.
+	grpcSrv := transportgrpc.NewServer(nil, a.logger)
 
 	// Create HTTP server for /healthz.
 	httpSrv := newHTTPServer(a.cfg.HTTPAddr())
