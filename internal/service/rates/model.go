@@ -34,10 +34,12 @@ type OrderBookEntry struct {
 	Volume decimal.Decimal
 }
 
-// OrderBook holds the ask and bid sides of the exchange order book.
+// OrderBook holds the ask and bid sides of the exchange order book
+// along with the timestamp when it was captured by the exchange.
 type OrderBook struct {
-	Asks []OrderBookEntry
-	Bids []OrderBookEntry
+	Asks      []OrderBookEntry
+	Bids      []OrderBookEntry
+	FetchedAt time.Time
 }
 
 // Rate is the computed result: ask and bid prices at a point in time.
