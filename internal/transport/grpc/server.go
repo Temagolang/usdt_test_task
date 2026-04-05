@@ -3,6 +3,7 @@ package grpc
 import (
 	"net"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -18,11 +19,13 @@ type Server struct {
 	health *health.Server
 }
 
-// NewServer creates a gRPC server with health and rates services registered.
+// NewServer creates a gRPC server with OTel tracing, health, and rates services.
 func NewServer(svc *rates.Service, logger *zap.Logger) *Server {
-	_ = logger // will be used for interceptors in T16
+	_ = logger
 
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(
+		grpc.StatsHandler(otelgrpc.NewServerHandler()),
+	)
 
 	// Register standard gRPC health service.
 	healthSrv := health.NewServer()
