@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package rates.v1;
+
+option go_package = "github.com/example/grinex-rates-service/gen/rates/v1;ratesv1";
+
+import "google/protobuf/timestamp.proto";
+
+// Parameters for TopN algorithm.
+// Selects the value at position N in the order book array (1-based).
+message TopNParams {
+  int32 n = 1;
+}
+
+// Parameters for AvgNM algorithm.
+// Calculates the average of order book entries in the range [N, M] (1-based, inclusive).
+message AvgNMParams {
+  int32 n = 1;
+  int32 m = 2;
+}
+
+message GetRatesRequest {
+  // Algorithm selection via oneof — no separate enum to avoid contradictory state.
+  oneof algorithm {
+    TopNParams top_n = 1;
+    AvgNMParams avg_nm = 2;
+  }
+}
+
+message GetRatesResponse {
+  // Ask price as a decimal string (no floats for money).
+  string ask = 1;
+  // Bid price as a decimal string (no floats for money).
+  string bid = 2;
+  // Timestamp when the rate was fetched from Grinex.
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+// RatesService provides USDT exchange rate data from Grinex.
+service RatesService {
+  // GetRates fetches USDT ask/bid rates from Grinex using the specified algorithm.
+  // The result is persisted to storage on each call.
+  rpc GetRates(GetRatesRequest) returns (GetRatesResponse);
+}

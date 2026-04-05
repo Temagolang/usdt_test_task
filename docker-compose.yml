@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: rates
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "50051:50051"
+      - "8080:8080"
+    environment:
+      GRPC_PORT: "50051"
+      HTTP_PORT: "8080"
+      DATABASE_DSN: "postgres://postgres:postgres@postgres:5432/rates?sslmode=disable"
+      LOG_LEVEL: "info"
+      GRINEX_URL: "https://grinex.io"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - app
+
+volumes:
+  pgdata:
