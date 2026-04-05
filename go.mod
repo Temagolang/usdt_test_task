@@ -3,6 +3,7 @@ module github.com/example/grinex-rates-service
 go 1.26.1
 
 require (
+	github.com/shopspring/decimal v1.4.0
 	github.com/spf13/cobra v1.10.2
 	go.opentelemetry.io/otel v1.43.0
 	go.opentelemetry.io/otel/sdk v1.43.0
