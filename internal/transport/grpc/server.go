@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"net"
-	
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
@@ -20,14 +20,14 @@ type Server struct {
 // NewServer creates a gRPC server with health service registered.
 func NewServer(logger *zap.Logger) *Server {
 	srv := grpc.NewServer()
-	
+
 	// Register standard gRPC health service.
 	healthSrv := health.NewServer()
 	healthpb.RegisterHealthServer(srv, healthSrv)
-	
+
 	// Enable server reflection for development.
 	reflection.Register(srv)
-	
+
 	return &Server{
 		srv:    srv,
 		health: healthSrv,

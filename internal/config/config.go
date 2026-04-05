@@ -16,22 +16,27 @@ type Config struct {
 	Grinex   Grinex
 }
 
+// App holds application-level settings.
 type App struct {
 	LogLevel string
 }
 
+// GRPC holds gRPC server settings.
 type GRPC struct {
 	Port int
 }
 
+// HTTP holds HTTP server settings (healthz endpoint).
 type HTTP struct {
 	Port int
 }
 
+// Postgres holds PostgreSQL connection settings.
 type Postgres struct {
 	DSN string
 }
 
+// Grinex holds Grinex exchange API settings.
 type Grinex struct {
 	URL string
 }
