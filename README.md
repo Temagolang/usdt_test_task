@@ -9,12 +9,17 @@ gRPC service for fetching USDT exchange rates (ask/bid) from Grinex exchange wit
 
 ```bash
 make build
-docker-compose up -d                                  # starts postgres
-docker-compose run --rm app ./app                     # migrates + starts gRPC server
+docker-compose up -d
+docker-compose run --rm app ./app
 ```
 
-The Docker entrypoint automatically runs `migrate up` before starting the server.
-To run migrations manually: `docker-compose run --rm app ./app migrate up`.
+With published ports (gRPC 50051, HTTP 8080):
+
+```bash
+make build
+docker-compose up -d
+docker-compose run --rm --service-ports app ./app
+```
 
 Run tests:
 
@@ -22,22 +27,21 @@ Run tests:
 make test
 ```
 
+Migrations are applied automatically by Docker entrypoint before starting the server.
+
 ## Development
 
-For development with published ports (gRPC 50051, HTTP 8080):
-
 ```bash
-make run                                              # postgres + app with ports
+make run    # builds and starts postgres + app with published ports
 ```
 
-To verify the service is working (requires [grpcurl](https://github.com/fullstorydev/grpcurl)):
+Verify the service:
 
 ```bash
 grpcurl -plaintext -d '{"top_n":{"n":1}}' localhost:50051 rates.v1.RatesService/GetRates
+curl http://localhost:8080/healthz
+curl http://localhost:8080/metrics
 ```
-
-> `docker-compose run` does not publish ports by default.
-> Use `make run` or `docker-compose run --rm --service-ports app ./app` to expose ports.
 
 ## Project Structure
 
@@ -65,7 +69,7 @@ make build          # Build binary
 make test           # Run tests
 make lint           # Run golangci-lint
 make docker-build   # Build Docker image
-make run            # Start postgres + app with published ports (dev)
+make run            # Start postgres + app with published ports
 make gen            # Generate proto + sqlc code
 make gen-proto      # Generate proto code only
 make gen-sqlc       # Generate sqlc code only
@@ -115,6 +119,7 @@ Response:
 
 - **gRPC Health**: standard `grpc.health.v1.Health` service
 - **HTTP**: `GET /healthz` on HTTP port
+- **Prometheus**: `GET /metrics` on HTTP port
 
 ## Implementation Status
 
@@ -131,6 +136,7 @@ Response:
 | Graceful shutdown | Implemented |
 | Config: env + flags | Implemented |
 | Prometheus metrics (`/metrics`) | Implemented |
+| zap structured logging | Implemented |
 
 ## Go Version
 

@@ -15,7 +15,6 @@ lint:
 docker-build:
 	docker build -t grinex-rates-service .
 
-# Start postgres + app together for development.
 run:
 	docker-compose --profile app up --build
 

@@ -24,16 +24,10 @@ type ShutdownFunc func(ctx context.Context) error
 // If OTEL_EXPORTER_OTLP_ENDPOINT is set, traces are exported via OTLP gRPC.
 // Otherwise, TracerProvider is created without an exporter (traces are discarded).
 func Init(ctx context.Context) (ShutdownFunc, error) {
-	res, err := resource.Merge(
-		resource.Default(),
-		resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceName(serviceName),
-		),
+	res := resource.NewWithAttributes(
+		semconv.SchemaURL,
+		semconv.ServiceName(serviceName),
 	)
-	if err != nil {
-		return nil, fmt.Errorf("otel resource: %w", err)
-	}
 
 	opts := []sdktrace.TracerProviderOption{
 		sdktrace.WithResource(res),

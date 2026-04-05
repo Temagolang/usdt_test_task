@@ -3,15 +3,16 @@ package app
 import (
 	"net/http"
 
-	"github.com/prometheus/client_golang/prometheus
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func newHTTPServer(addr string) *http.Server {
 func newHTTPServer(addr string, reg *prometheus.Registry) *http.Server {
+	mux := http.NewServeMux()
+
 	mux.HandleFunc("/healthz", handleHealthz)
+	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
-
-.HandleFunc("/healthz
 	return &http.Server{
 		Addr:    addr,
 		Handler: mux,
