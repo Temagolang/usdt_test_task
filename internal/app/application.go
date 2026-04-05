@@ -2,16 +2,27 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 
+	"github.com/example/grinex-rates-service/internal/client/grinex"
 	"github.com/example/grinex-rates-service/internal/config"
 	otelinit "github.com/example/grinex-rates-service/internal/observability/otel"
+	postgresrepo "github.com/example/grinex-rates-service/internal/repo/rates/postgres"
+	"github.com/example/grinex-rates-service/internal/service/rates"
 	transportgrpc "github.com/example/grinex-rates-service/internal/transport/grpc"
 )
 
-const otelShutdownTimeout = 5 * time.Second
+const (
+	otelShutdownTimeout = 5 * time.Second
+
+	// Grinex trading symbol for USDT/RUB depth.
+	// Hardcoded per spec: the service is specifically for this pair.
+	grinexSymbol = "usdta7a5"
+)
 
 // Application is the composition root that wires all dependencies
 // and manages server lifecycle.
@@ -43,11 +54,20 @@ func (a *Application) Run(ctx context.Context) error {
 		}
 	}()
 
-	// Create gRPC server.
-	// TODO(T15): pass real rates.Service instead of nil after wiring.
-	grpcSrv := transportgrpc.NewServer(nil, a.logger)
+	// Connect to PostgreSQL.
+	pool, err := pgxpool.New(ctx, a.cfg.Postgres.DSN)
+	if err != nil {
+		return fmt.Errorf("connect to postgres: %w", err)
+	}
+	defer pool.Close()
 
-	// Create HTTP server for /healthz.
+	// Wire dependencies.
+	grinexClient := grinex.New(a.cfg.Grinex.URL, grinexSymbol)
+	repo := postgresrepo.New(pool)
+	svc := rates.NewService(grinexClient, repo)
+
+	// Create servers.
+	grpcSrv := transportgrpc.NewServer(svc, a.logger)
 	httpSrv := newHTTPServer(a.cfg.HTTPAddr())
 
 	// Start servers and wait for graceful shutdown.
