@@ -19,8 +19,10 @@ docker-build:
 run:
 	docker-compose --profile app up --build
 
-gen:
-	@echo "TODO: buf generate && sqlc generate"
+gen: gen-sqlc
+
+gen-sqlc:
+	sqlc generate
 
 migrate-up:
 	$(GO) run . migrate up
