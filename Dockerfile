@@ -14,5 +14,7 @@ RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
 COPY --from=builder /build/app ./app
+COPY docker-entrypoint.sh ./
 
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["./app"]
