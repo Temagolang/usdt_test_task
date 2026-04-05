@@ -2,12 +2,16 @@ package app
 
 import (
 	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus
 )
 
 func newHTTPServer(addr string) *http.Server {
-	mux := http.NewServeMux()
+func newHTTPServer(addr string, reg *prometheus.Registry) *http.Server {
 	mux.HandleFunc("/healthz", handleHealthz)
 
+
+.HandleFunc("/healthz
 	return &http.Server{
 		Addr:    addr,
 		Handler: mux,

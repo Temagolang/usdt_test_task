@@ -24,7 +24,7 @@ func TestFetchDepth_HappyPath(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "usdta7a5")
+	c := New(srv.URL, "usdta7a5", nil)
 	book, err := c.FetchDepth(context.Background())
 	require.NoError(t, err)
 
@@ -51,7 +51,7 @@ func TestFetchDepth_RequestPathAndSymbol(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "usdta7a5")
+	c := New(srv.URL, "usdta7a5", nil)
 	_, err := c.FetchDepth(context.Background())
 	require.NoError(t, err)
 
@@ -107,7 +107,7 @@ func TestFetchDepth_Errors(t *testing.T) {
 			srv := httptest.NewServer(tt.handler)
 			defer srv.Close()
 
-			c := New(srv.URL, "usdta7a5")
+			c := New(srv.URL, "usdta7a5", nil)
 			_, err := c.FetchDepth(context.Background())
 			require.Error(t, err)
 			require.Contains(t, err.Error(), tt.wantErr)
@@ -124,7 +124,7 @@ func TestFetchDepth_EmptyBook(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "usdta7a5")
+	c := New(srv.URL, "usdta7a5", nil)
 	book, err := c.FetchDepth(context.Background())
 	require.NoError(t, err)
 
@@ -141,7 +141,7 @@ func TestFetchDepth_VolumeParsed(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	c := New(srv.URL, "usdta7a5")
+	c := New(srv.URL, "usdta7a5", nil)
 	book, err := c.FetchDepth(context.Background())
 	require.NoError(t, err)
 

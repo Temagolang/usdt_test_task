@@ -9,18 +9,20 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	ratesv1 "github.com/example/grinex-rates-service/gen/rates/v1"
+	appmetrics "github.com/example/grinex-rates-service/internal/observability/metrics"
 	"github.com/example/grinex-rates-service/internal/service/rates"
 )
 
 // RatesHandler implements ratesv1.RatesServiceServer.
 type RatesHandler struct {
 	ratesv1.UnimplementedRatesServiceServer
-	svc *rates.Service
+	svc     *rates.Service
+	metrics *appmetrics.Metrics
 }
 
 // NewRatesHandler creates a handler and registers it on the gRPC server.
-func NewRatesHandler(reg grpc.ServiceRegistrar, svc *rates.Service) *RatesHandler {
-	h := &RatesHandler{svc: svc}
+func NewRatesHandler(reg grpc.ServiceRegistrar, svc *rates.Service, metrics *appmetrics.Metrics) *RatesHandler {
+	h := &RatesHandler{svc: svc, metrics: metrics}
 	ratesv1.RegisterRatesServiceServer(reg, h)
 
 	return h
@@ -28,13 +30,25 @@ func NewRatesHandler(reg grpc.ServiceRegistrar, svc *rates.Service) *RatesHandle
 
 // GetRates maps proto request to domain, calls service, maps result back to proto.
 func (h *RatesHandler) GetRates(ctx context.Context, req *ratesv1.GetRatesRequest) (*ratesv1.GetRatesResponse, error) {
+	if h.metrics != nil {
+		h.metrics.GetRatesTotal.Inc()
+	}
+
 	domainReq, err := mapRequest(req)
 	if err != nil {
+		if h.metrics != nil {
+			h.metrics.GetRatesErrors.Inc()
+		}
+
 		return nil, err
 	}
 
 	rate, err := h.svc.GetRates(ctx, domainReq)
 	if err != nil {
+		if h.metrics != nil {
+			h.metrics.GetRatesErrors.Inc()
+		}
+
 		return nil, status.Errorf(codes.Internal, "get rates: %v", err)
 	}
 

@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
+	appmetrics "github.com/example/grinex-rates-service/internal/observability/metrics"
 	"github.com/example/grinex-rates-service/internal/service/rates"
 )
 
@@ -20,15 +21,17 @@ var tracer = otel.Tracer("grinex-client")
 
 // Client fetches order book data from Grinex exchange.
 type Client struct {
-	http   *resty.Client
-	symbol string
+	http    *resty.Client
+	symbol  string
+	metrics *appmetrics.Metrics
 }
 
 // New creates a Grinex client for the given base URL and trading symbol.
-func New(baseURL, symbol string) *Client {
+func New(baseURL, symbol string, metrics *appmetrics.Metrics) *Client {
 	return &Client{
-		http:   resty.New().SetBaseURL(baseURL),
-		symbol: symbol,
+		http:    resty.New().SetBaseURL(baseURL),
+		symbol:  symbol,
+		metrics: metrics,
 	}
 }
 
@@ -39,6 +42,12 @@ func (c *Client) FetchDepth(ctx context.Context) (*rates.OrderBook, error) {
 
 	span.SetAttributes(attribute.String("grinex.symbol", c.symbol))
 
+	if c.metrics != nil {
+		c.metrics.GrinexTotal.Inc()
+	}
+
+	start := time.Now()
+
 	var raw depthResponse
 
 	resp, err := c.http.R().
@@ -46,6 +55,11 @@ func (c *Client) FetchDepth(ctx context.Context) (*rates.OrderBook, error) {
 		SetQueryParam("symbol", c.symbol).
 		SetResult(&raw).
 		Get(depthPath)
+
+	if c.metrics != nil {
+		c.metrics.GrinexDuration.Observe(time.Since(start).Seconds())
+	}
+
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "depth request failed")

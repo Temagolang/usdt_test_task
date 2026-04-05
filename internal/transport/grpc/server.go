@@ -10,6 +10,7 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
 
+	appmetrics "github.com/example/grinex-rates-service/internal/observability/metrics"
 	"github.com/example/grinex-rates-service/internal/service/rates"
 )
 
@@ -20,7 +21,7 @@ type Server struct {
 }
 
 // NewServer creates a gRPC server with OTel tracing, health, and rates services.
-func NewServer(svc *rates.Service, logger *zap.Logger) *Server {
+func NewServer(svc *rates.Service, metrics *appmetrics.Metrics, logger *zap.Logger) *Server {
 	_ = logger
 
 	srv := grpc.NewServer(
@@ -33,7 +34,7 @@ func NewServer(svc *rates.Service, logger *zap.Logger) *Server {
 
 	// Register rates service handler when available.
 	if svc != nil {
-		NewRatesHandler(srv, svc)
+		NewRatesHandler(srv, svc, metrics)
 	}
 
 	// Enable server reflection for development.

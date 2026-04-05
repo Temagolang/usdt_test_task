@@ -130,7 +130,7 @@ Response:
 | OpenTelemetry tracing (gRPC + client) | Implemented |
 | Graceful shutdown | Implemented |
 | Config: env + flags | Implemented |
-| Prometheus metrics | Not implemented (bonus) |
+| Prometheus metrics (`/metrics`) | Implemented |
 
 ## Go Version
 

@@ -6,10 +6,12 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 
 	"github.com/example/grinex-rates-service/internal/client/grinex"
 	"github.com/example/grinex-rates-service/internal/config"
+	appmetrics "github.com/example/grinex-rates-service/internal/observability/metrics"
 	otelinit "github.com/example/grinex-rates-service/internal/observability/otel"
 	postgresrepo "github.com/example/grinex-rates-service/internal/repo/rates/postgres"
 	"github.com/example/grinex-rates-service/internal/service/rates"
@@ -54,6 +56,10 @@ func (a *Application) Run(ctx context.Context) error {
 		}
 	}()
 
+	// Prometheus metrics.
+	promRegistry := prometheus.NewRegistry()
+	metrics := appmetrics.New(promRegistry)
+
 	// Connect to PostgreSQL.
 	pool, err := pgxpool.New(ctx, a.cfg.Postgres.DSN)
 	if err != nil {
@@ -62,13 +68,13 @@ func (a *Application) Run(ctx context.Context) error {
 	defer pool.Close()
 
 	// Wire dependencies.
-	grinexClient := grinex.New(a.cfg.Grinex.URL, grinexSymbol)
+	grinexClient := grinex.New(a.cfg.Grinex.URL, grinexSymbol, metrics)
 	repo := postgresrepo.New(pool)
 	svc := rates.NewService(grinexClient, repo)
 
 	// Create servers.
-	grpcSrv := transportgrpc.NewServer(svc, a.logger)
-	httpSrv := newHTTPServer(a.cfg.HTTPAddr())
+	grpcSrv := transportgrpc.NewServer(svc, metrics, a.logger)
+	httpSrv := newHTTPServer(a.cfg.HTTPAddr(), promRegistry)
 
 	// Start servers and wait for graceful shutdown.
 	return a.serve(ctx, grpcSrv, httpSrv)
